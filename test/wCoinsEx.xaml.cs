@@ -11,6 +11,7 @@ namespace test
         {
             InitializeComponent();
             c = coins;
+            lbCount.Content = c.Count == 0 ? 0 : 1;
         }
 
         private void Down_Click(object sender, RoutedEventArgs e)
