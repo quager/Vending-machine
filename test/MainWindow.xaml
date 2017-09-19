@@ -22,11 +22,11 @@
         <Label Content="Кошелёк VM" Grid.Row="0" Grid.Column="2" HorizontalAlignment="Center"/>
 
         <Border Grid.Column="0" BorderBrush="Black" BorderThickness="1" Grid.Row="1" Background="#FFD1D1D1">
-            <ListView x:Name="lwUserWallet" Margin="10" SelectionChanged="lwUserWallet_SelectionChanged">
+            <ListView x:Name="lwUserWallet" Margin="10">
                 <ListView.ItemTemplate>
                     <DataTemplate DataType="{x:Type local:Coins}">
                         <StackPanel Orientation="Horizontal">
-                            <Button Content="Внести" Click="AddCoins_Click" Margin="10,2"/>
+                            <Button Content="Внести" Click="AddCoins_Click" Margin="10,2" IsEnabled="{Binding Count}"/>
                             <Label Content="{Binding}"/>
                         </StackPanel>
                     </DataTemplate>
@@ -41,11 +41,11 @@
                 <RowDefinition Height="auto"/>
             </Grid.RowDefinitions>
 
-            <ListView x:Name="lwPriceList" Margin="0,0,0,10" Grid.Row="0" SelectionChanged="lwPriceList_SelectionChanged">
+            <ListView x:Name="lwPriceList" Margin="0,0,0,10" Grid.Row="0">
                 <ListView.ItemTemplate>
                     <DataTemplate DataType="{x:Type local:Items}">
                         <StackPanel Orientation="Horizontal">
-                            <Button Content="Купить" Click="GetItem_Click" Margin="10,2"/>
+                            <Button Content="Купить" Click="GetItem_Click" Margin="10,2" IsEnabled="{Binding Count}"/>
                             <Label Content="{Binding}"/>
                         </StackPanel>
                     </DataTemplate>

@@ -54,20 +54,5 @@ namespace test
         {
             Data.vm.GetChange();
         }
-
-        private void lwPriceList_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            ListViewItem lwi = sender as ListViewItem;
-            Items item = lwi.DataContext as Items;
-            Data.vm.BuyItem(item);
-        }
-
-        private void lwUserWallet_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            ListViewItem lwi = sender as ListViewItem;
-            Coins coins = lwi.DataContext as Coins;
-            wCoinsEx w = new wCoinsEx(coins);
-            w.ShowDialog();
-        }
     }
 }
