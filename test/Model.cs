@@ -87,33 +87,97 @@ namespace test
             }
         }
 
-        public void GetCoins(int sum, Wallet toDest)
+        private int GetChange(int sum, Dictionary<int, int> coins, ref Dictionary<int, int> change)
         {
-            if (sum <= _account)
+            int count;
+            int amount = sum;
+
+            int minCoin = coins.Keys.Min();
+            int maxCoin = coins.Keys.Max();
+
+            int c = maxCoin;
+            int exval = c;
+
+                while (amount % c != 0)
+                {
+                    count = amount / c;
+                    if (count > 0 && coins[c] > 0)
+                    {
+                        if (coins[c] >= count)
+                        {
+                            amount -= c * count;
+                            if (!change.ContainsKey(c)) change[c] = count;
+                            else change[c] += count;
+                        }
+                        else
+                        {
+                            amount -= coins[c] * c;
+                            if (!change.ContainsKey(c)) change[c] = coins[c];
+                            else change[c] += coins[c];
+                        }
+                    }
+
+                    if (c == minCoin) break;
+                    c = coins.Keys.Where(x => x < c).Max();
+                }
+                if (coins[c] > 0)
+                {
+                    count = amount / c;
+                    if (count > 0 && coins[c] > 0)
+                    {
+                        if (coins[c] >= count)
+                        {
+                            amount -= c * count;
+                            if (!change.ContainsKey(c)) change[c] = count;
+                            else change[c] += count;
+                        }
+                        else
+                        {
+                            amount -= coins[c] * c;
+                            if (!change.ContainsKey(c)) change[c] = coins[c];
+                            else change[c] += coins[c];
+                        }
+                    }
+                }
+
+            return amount;
+        }
+
+        public void GetCoins(ref int sum, Wallet toDest)
+        {
+            if (sum > _account) MessageBox.Show("Не хватает монет");
+            else
             {
                 int count;
                 int amount = sum;
                 Dictionary<int, int> change = new Dictionary<int, int>();
+                Dictionary<int, int> coins = new Dictionary<int, int>();
+                
+                foreach (KeyValuePair<int,int> pair in _coins)
+                    if (_coins[pair.Key] > 0) coins[pair.Key] = _coins[pair.Key];
 
-                int c = _coins.Keys.Max();
-                while (_coins[c] == 0)
+                if (coins.Count == 0)
                 {
-                    c = _coins.Keys.Where(x => x < c).Max();
-                    if (c == _coins.Keys.Min()) break;
+                    MessageBox.Show("Не хватает монет");
+                    return;
                 }
+
+                int minCoin = coins.Keys.Min();
+                int maxCoin = coins.Keys.Max();
+
+                int c = maxCoin;
                 int exval = c;
                 bool start = true;
-
-                while (amount != 0 && c >= _coins.Keys.Min())
+                while (amount != 0 && c >= minCoin)
                 {
-                    if (!start) c = _coins.Keys.Where(x => x < exval).Max();
+                    if (!start) c = coins.Keys.Where(x => x < exval).Max();
                     start = false;
                     while (amount % c != 0)
                     {
                         count = amount / c;
-                        if (count > 0)
+                        if (count > 0 && coins[c] > 0)
                         {
-                            if (_coins[c] >= count)
+                            if (coins[c] >= count)
                             {
                                 amount -= c * count;
                                 if (!change.ContainsKey(c)) change[c] = count;
@@ -121,21 +185,21 @@ namespace test
                             }
                             else
                             {
-                                amount -= _coins[c] * c;
-                                if (!change.ContainsKey(c)) change[c] = _coins[c];
-                                else change[c] += _coins[c];
+                                amount -= coins[c] * c;
+                                if (!change.ContainsKey(c)) change[c] = coins[c];
+                                else change[c] += coins[c];
                             }
                         }
 
-                        if (c == _coins.Keys.Min()) break;
-                        c = _coins.Keys.Where(x => x < c).Max();
+                        if (c == minCoin) break;
+                        c = coins.Keys.Where(x => x < c).Max();
                     }
-                    if (_coins[c] > 0)
+                    if (coins[c] > 0)
                     {
                         count = amount / c;
-                        if (count > 0)
+                        if (count > 0 && coins[c] > 0)
                         {
-                            if (_coins[c] >= count)
+                            if (coins[c] >= count)
                             {
                                 amount -= c * count;
                                 if (!change.ContainsKey(c)) change[c] = count;
@@ -143,33 +207,42 @@ namespace test
                             }
                             else
                             {
-                                amount -= _coins[c] * c;
-                                if (!change.ContainsKey(c)) change[c] = _coins[c];
-                                else change[c] += _coins[c];
+                                amount -= coins[c] * c;
+                                if (!change.ContainsKey(c)) change[c] = coins[c];
+                                else change[c] += coins[c];
                             }
                         }
                     }
                     if (amount > 0)
                     {
                         exval = change.Keys.Max();
+                        Dictionary<int, int> newval = coins;
+                        Dictionary<int, int> temp = change;
+                        newval.Remove(exval);
+                        if (GetChange(amount, newval, ref change) == 0)
+                        {
+                            amount = 0;
+                            break;
+                        }
+                        change = temp;
                         amount += exval;
                         change[exval]--;
                         if (change[exval] == 0) change.Remove(exval);
                     }
-                    if (exval == _coins.Keys.Min()) c--;
+                    if (exval == minCoin) c--;
                 }
 
                 if (amount > 0) MessageBox.Show("Не хватает монет");
                 else
                 {
                     int c1 = change.Keys.Max();
-                    int c2 = _coins.Keys.Max();
+                    int c2 = coins.Keys.Max();
                     while (c2 > c1)
                     {
                         c1 = change.Keys.Where(x => x < c2).Max();
                         while (c1 > change.Keys.Min())
                         {
-                            if (change[c1] * c1 <= _coins[c2] * c2 && c2 % c1 == 0)
+                            if (change[c1] * c1 <= coins[c2] * c2 && c2 % c1 == 0)
                             {
                                 int v = change[c1] * c1 / c2;
                                 if (!change.ContainsKey(c2))
@@ -182,7 +255,7 @@ namespace test
                             c1 = change.Keys.Where(x => x < c1).Max();
                         }
 
-                        if (change[c1] * c1 <= _coins[c2] * c2 && c2 % c1 == 0)
+                        if (change[c1] * c1 <= coins[c2] * c2 && c2 % c1 == 0)
                         {
                             int v = change[c1] * c1 / c2;
                             if (!change.ContainsKey(c2))
@@ -192,7 +265,7 @@ namespace test
                             }
                         }
 
-                        c2 = _coins.Keys.Where(x => x < c2).Max();
+                        c2 = coins.Keys.Where(x => x < c2).Max();
                     }
                     foreach (KeyValuePair<int,int>entry in change)
                     {
@@ -200,6 +273,7 @@ namespace test
                         toDest.AddCoins(new Coins(entry.Key, entry.Value));
                     }
                     Account -= sum;
+                    sum = 0;
                 }
                 UpdateList();
             }
@@ -297,8 +371,8 @@ namespace test
 
         public void GetChange()
         {
-            Account.GetCoins(Income, Data.userWallet);
-            Income = 0;
+            Account.GetCoins(ref _income, Data.userWallet);
+            Income = _income;
         }
 
         public ObservableCollection<Items> PriceList { get; set; }

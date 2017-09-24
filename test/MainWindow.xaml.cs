@@ -14,15 +14,15 @@ namespace test
             lwPriceList.ItemsSource = Data.vm.PriceList;
             tbAccount.DataContext = Data.vm;
 
-            Data.userWallet.AddCoins(new Coins(1, 5));
+            Data.userWallet.AddCoins(new Coins(1, 10));
             Data.userWallet.AddCoins(new Coins(2, 10));
-            Data.userWallet.AddCoins(new Coins(5, 5));
-            Data.userWallet.AddCoins(new Coins(10, 5));
+            Data.userWallet.AddCoins(new Coins(5, 10));
+            Data.userWallet.AddCoins(new Coins(10, 10));
 
-            Data.vm.AddToAccount(new Coins(1, 3));
-            Data.vm.AddToAccount(new Coins(2, 2));
-            Data.vm.AddToAccount(new Coins(5, 2));
-            Data.vm.AddToAccount(new Coins(10, 1));
+            Data.vm.AddToAccount(new Coins(1, 0));
+            Data.vm.AddToAccount(new Coins(2, 100));
+            Data.vm.AddToAccount(new Coins(5, 100));
+            Data.vm.AddToAccount(new Coins(10, 0));
 
             Data.vm.PriceList.Add(new Items("Чай", 13, 10));
             Data.vm.PriceList.Add(new Items("Кофе", 18, 20));
