@@ -72,8 +72,13 @@ namespace test
         public void AddCoins(Coins coins)
         {
             Account += coins.CoinType * coins.Count;
-            if (!_coins.ContainsKey(coins.CoinType)) _coins[coins.CoinType] = coins.Count;
+            if (!_coins.ContainsKey(coins.CoinType))
+            {
+                _coins[coins.CoinType] = coins.Count;
+                List.Add(coins);
+            }
             else _coins[coins.CoinType] += coins.Count;
+
             UpdateList();
         }
 
@@ -87,203 +92,122 @@ namespace test
             }
         }
 
-        private int GetChange(int sum, Dictionary<int, int> coins, ref Dictionary<int, int> change)
+        private void IsSuitable(int start, int sum, List<int> rates, ref List<int> values, ref List<List<int>> result, Dictionary<int, int> coins)
         {
-            int count;
-            int amount = sum;
+            int n = start + 1;
+            List<int> baseList = new List<int>(values);
 
-            int minCoin = coins.Keys.Min();
-            int maxCoin = coins.Keys.Max();
+            for (int i = n; i < rates.Count; i++)
+            {
+                int coin = rates[i];
 
-            int c = maxCoin;
-            int exval = c;
+                if (coin > sum) continue;
 
-                while (amount % c != 0)
+                if (sum > coins[coin] * coin)
                 {
-                    count = amount / c;
-                    if (count > 0 && coins[c] > 0)
-                    {
-                        if (coins[c] >= count)
-                        {
-                            amount -= c * count;
-                            if (!change.ContainsKey(c)) change[c] = count;
-                            else change[c] += count;
-                        }
-                        else
-                        {
-                            amount -= coins[c] * c;
-                            if (!change.ContainsKey(c)) change[c] = coins[c];
-                            else change[c] += coins[c];
-                        }
-                    }
+                    int nv = sum - coin * coins[coin];
+                    baseList = new List<int>(baseList);
+                    baseList.Add(coin);
 
-                    if (c == minCoin) break;
-                    c = coins.Keys.Where(x => x < c).Max();
-                }
-                if (coins[c] > 0)
-                {
-                    count = amount / c;
-                    if (count > 0 && coins[c] > 0)
-                    {
-                        if (coins[c] >= count)
-                        {
-                            amount -= c * count;
-                            if (!change.ContainsKey(c)) change[c] = count;
-                            else change[c] += count;
-                        }
-                        else
-                        {
-                            amount -= coins[c] * c;
-                            if (!change.ContainsKey(c)) change[c] = coins[c];
-                            else change[c] += coins[c];
-                        }
-                    }
+                    IsSuitable(i, nv, rates, ref baseList, ref result, coins);
+                    baseList.Remove(coin);
+                    continue;
                 }
 
-            return amount;
+                baseList.Add(coin);
+                if (sum % coin == 0) result.Add(baseList);
+                
+                int v = sum - coin * (sum / coin);
+                baseList = new List<int>(baseList);
+
+                if (v == 0)
+                {
+                    baseList.Remove(coin);
+                    continue;
+                }
+
+                IsSuitable(i, v, rates, ref baseList, ref result, coins);
+                baseList.Remove(coin);
+            }
+        }
+
+        private List<int> GetComposition(int sum, Dictionary<int, int> coins)
+        {
+            List<List<int>> res = new List<List<int>>();
+            List<int> rates = coins.Keys.ToList();
+            rates.Sort((a, b) => -1 * a.CompareTo(b));
+
+            for (int n = 0; n < rates.Count; n++)
+            {
+                int coin = rates[n];
+                List<int> val;
+
+                if (coin > sum) continue;
+                if (sum > coins[coin] * coin)
+                {
+                    int nv = sum - coin * coins[coin];
+                    val = new List<int>();
+                    val.Add(coin);
+
+                    IsSuitable(n, nv, rates, ref val, ref res, coins);
+                    continue;
+                }
+
+                val = new List<int>();
+                val.Add(coin);
+
+                if (sum % coin == 0) res.Add(val);
+
+                int v = sum - coin * (sum / coin);
+                IsSuitable(n, v, rates, ref val, ref res, coins);
+            }
+
+            if (res.Count == 0) return null;
+            return res[0];
         }
 
         public void GetCoins(ref int sum, Wallet toDest)
         {
-            if (sum > _account) MessageBox.Show("Не хватает монет");
-            else
+            if (sum > _account)
             {
-                int count;
-                int amount = sum;
-                Dictionary<int, int> change = new Dictionary<int, int>();
-                Dictionary<int, int> coins = new Dictionary<int, int>();
-                
-                foreach (KeyValuePair<int,int> pair in _coins)
-                    if (_coins[pair.Key] > 0) coins[pair.Key] = _coins[pair.Key];
-
-                if (coins.Count == 0)
-                {
-                    MessageBox.Show("Не хватает монет");
-                    return;
-                }
-
-                int minCoin = coins.Keys.Min();
-                int maxCoin = coins.Keys.Max();
-
-                int c = maxCoin;
-                int exval = c;
-                bool start = true;
-                while (amount != 0 && c >= minCoin)
-                {
-                    if (!start) c = coins.Keys.Where(x => x < exval).Max();
-                    start = false;
-                    while (amount % c != 0)
-                    {
-                        count = amount / c;
-                        if (count > 0 && coins[c] > 0)
-                        {
-                            if (coins[c] >= count)
-                            {
-                                amount -= c * count;
-                                if (!change.ContainsKey(c)) change[c] = count;
-                                else change[c] += count;
-                            }
-                            else
-                            {
-                                amount -= coins[c] * c;
-                                if (!change.ContainsKey(c)) change[c] = coins[c];
-                                else change[c] += coins[c];
-                            }
-                        }
-
-                        if (c == minCoin) break;
-                        c = coins.Keys.Where(x => x < c).Max();
-                    }
-                    if (coins[c] > 0)
-                    {
-                        count = amount / c;
-                        if (count > 0 && coins[c] > 0)
-                        {
-                            if (coins[c] >= count)
-                            {
-                                amount -= c * count;
-                                if (!change.ContainsKey(c)) change[c] = count;
-                                else change[c] += count;
-                            }
-                            else
-                            {
-                                amount -= coins[c] * c;
-                                if (!change.ContainsKey(c)) change[c] = coins[c];
-                                else change[c] += coins[c];
-                            }
-                        }
-                    }
-                    if (amount > 0)
-                    {
-                        exval = change.Keys.Max();
-                        Dictionary<int, int> newval = coins;
-                        Dictionary<int, int> temp = change;
-                        newval.Remove(exval);
-                        if (GetChange(amount, newval, ref change) == 0)
-                        {
-                            amount = 0;
-                            break;
-                        }
-                        change = temp;
-                        amount += exval;
-                        change[exval]--;
-                        if (change[exval] == 0) change.Remove(exval);
-                    }
-                    if (exval == minCoin) c--;
-                }
-
-                if (amount > 0) MessageBox.Show("Не хватает монет");
-                else
-                {
-                    int c1 = change.Keys.Max();
-                    int c2 = coins.Keys.Max();
-                    while (c2 > c1)
-                    {
-                        c1 = change.Keys.Where(x => x < c2).Max();
-                        while (c1 > change.Keys.Min())
-                        {
-                            if (change[c1] * c1 <= coins[c2] * c2 && c2 % c1 == 0)
-                            {
-                                int v = change[c1] * c1 / c2;
-                                if (!change.ContainsKey(c2))
-                                {
-                                    change[c1] -= v * c2 / c1;
-                                    change[c2] = v;
-                                }
-                            }
-
-                            c1 = change.Keys.Where(x => x < c1).Max();
-                        }
-
-                        if (change[c1] * c1 <= coins[c2] * c2 && c2 % c1 == 0)
-                        {
-                            int v = change[c1] * c1 / c2;
-                            if (!change.ContainsKey(c2))
-                            {
-                                change[c1] -= v * c2 / c1;
-                                change[c2] = v;
-                            }
-                        }
-
-                        c2 = coins.Keys.Where(x => x < c2).Max();
-                    }
-                    foreach (KeyValuePair<int,int>entry in change)
-                    {
-                        _coins[entry.Key] -= entry.Value;
-                        toDest.AddCoins(new Coins(entry.Key, entry.Value));
-                    }
-                    Account -= sum;
-                    sum = 0;
-                }
-                UpdateList();
+                MessageBox.Show("Не хватает монет");
+                return;
             }
+            
+            int count;
+            int amount = sum;
+            Dictionary<int, int> change = new Dictionary<int, int>();
+
+            List<int> composition = GetComposition(sum, _coins);
+            if (composition == null)
+            {
+                MessageBox.Show("Не хватает монет");
+                return;
+            }
+
+            foreach (int coin in composition)
+            {
+                count = amount / coin;
+                amount -= coin * count;
+                if (!change.ContainsKey(coin)) change[coin] = count;
+                else change[coin] += count;
+            }
+
+            foreach (KeyValuePair<int, int> entry in change)
+            {
+                _coins[entry.Key] -= entry.Value;
+                toDest.AddCoins(new Coins(entry.Key, entry.Value));
+            }
+            Account -= sum;
+            sum = 0;
+
+            UpdateList();
         }
 
         private void UpdateList()
         {
-            List.Clear();
-            foreach (KeyValuePair<int, int> entry in _coins)
-                List.Add(new Coins(entry.Key, entry.Value));
+            for (int i = 0; i < List.Count; i++)
+                List[i] = new Coins(List[i].CoinType, _coins[List[i].CoinType]);
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
