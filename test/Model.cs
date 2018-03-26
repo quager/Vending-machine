@@ -92,7 +92,7 @@ namespace test
             }
         }
 
-        private void IsSuitable(int start, int sum, List<int> rates, ref List<int> values, ref List<List<int>> result, Dictionary<int, int> coins)
+        private void Fit(int start, int sum, List<int> rates, ref List<int> values, ref List<List<int>> result, Dictionary<int, int> coins)
         {
             int n = start + 1;
             List<int> baseList = new List<int>(values);
@@ -101,7 +101,7 @@ namespace test
             {
                 int coin = rates[i];
 
-                if (coin > sum) continue;
+                if (coin > sum || coins[coin] == 0) continue;
 
                 if (sum > coins[coin] * coin)
                 {
@@ -109,7 +109,7 @@ namespace test
                     baseList = new List<int>(baseList);
                     baseList.Add(coin);
 
-                    IsSuitable(i, nv, rates, ref baseList, ref result, coins);
+                    Fit(i, nv, rates, ref baseList, ref result, coins);
                     baseList.Remove(coin);
                     continue;
                 }
@@ -126,7 +126,7 @@ namespace test
                     continue;
                 }
 
-                IsSuitable(i, v, rates, ref baseList, ref result, coins);
+                Fit(i, v, rates, ref baseList, ref result, coins);
                 baseList.Remove(coin);
             }
         }
@@ -142,14 +142,14 @@ namespace test
                 int coin = rates[n];
                 List<int> val;
 
-                if (coin > sum) continue;
+                if (coin > sum || coins[coin] == 0) continue;
                 if (sum > coins[coin] * coin)
                 {
                     int nv = sum - coin * coins[coin];
                     val = new List<int>();
                     val.Add(coin);
 
-                    IsSuitable(n, nv, rates, ref val, ref res, coins);
+                    Fit(n, nv, rates, ref val, ref res, coins);
                     continue;
                 }
 
@@ -159,7 +159,7 @@ namespace test
                 if (sum % coin == 0) res.Add(val);
 
                 int v = sum - coin * (sum / coin);
-                IsSuitable(n, v, rates, ref val, ref res, coins);
+                Fit(n, v, rates, ref val, ref res, coins);
             }
 
             if (res.Count == 0) return null;
