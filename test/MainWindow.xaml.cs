@@ -19,10 +19,10 @@ namespace test
             Data.userWallet.AddCoins(new Coins(5, 10));
             Data.userWallet.AddCoins(new Coins(10, 10));
 
-            Data.vm.AddToAccount(new Coins(1, 0));
+            Data.vm.AddToAccount(new Coins(1, 100));
             Data.vm.AddToAccount(new Coins(2, 100));
             Data.vm.AddToAccount(new Coins(5, 100));
-            Data.vm.AddToAccount(new Coins(10, 0));
+            Data.vm.AddToAccount(new Coins(10, 100));
 
             Data.vm.PriceList.Add(new Items("Чай", 13, 10));
             Data.vm.PriceList.Add(new Items("Кофе", 18, 20));

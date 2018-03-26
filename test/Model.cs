@@ -92,97 +92,89 @@ namespace test
             }
         }
 
-        private bool Fit(int start, int sum, List<int> rates, ref List<Coins> values, Dictionary<int, int> coins)
-        {
-            int n = start + 1;
-            List<Coins> baseList = new List<Coins>(values);
-
-            for (int i = n; i < rates.Count; i++)
-            {
-                int coin = rates[i];
-
-                if (coins[coin] == 0) continue;
-                if (coin > sum)
-                {
-                    Coins prev = baseList[baseList.Count - 1];
-                    if ((sum + prev.CoinType) % coin == 0 && coins[coin] >= (sum + prev.CoinType))
-                    {
-                        baseList[baseList.Count - 1].Count--;
-                        sum += prev.CoinType;
-                    }
-                    else continue;
-                }
-
-                if (sum > coins[coin] * coin)
-                {
-                    int nv = sum - coin * coins[coin];
-                    baseList = new List<Coins>(baseList);
-                    baseList.Add(new Coins(coin, coins[coin]));
-
-                    if (Fit(i, nv, rates, ref baseList, coins))
-                    {
-                        values = baseList;
-                        return true;
-                    }
-                    baseList.RemoveAt(baseList.Count - 1);
-                    continue;
-                }
-
-                baseList.Add(new Coins(coin, sum / coin));
-                if (sum % coin == 0)
-                {
-                    values = baseList;
-                    return true;
-                }
-                
-                int v = sum - coin * (sum / coin);
-                baseList = new List<Coins>(baseList);
-
-                if (v == 0)
-                {
-                    baseList.RemoveAt(baseList.Count - 1);
-                    continue;
-                }
-
-                if (Fit(i, v, rates, ref baseList, coins))
-                {
-                    values = baseList;
-                    return true;
-                }
-                baseList.RemoveAt(baseList.Count - 1);
-            }
-
-            return false;
-        }
-
         private List<Coins> GetComposition(int sum, Dictionary<int, int> coins)
         {
-            List<Coins> val;
+            int n = 0;
+            int current_sum = 0;
+            List<Coins> res = new List<Coins>();
+            Dictionary<int, int> current_coins = new Dictionary<int, int>();
+            List<int> coins_set = new List<int>();
             List<int> rates = coins.Keys.ToList();
             rates.Sort((a, b) => -1 * a.CompareTo(b));
 
-            for (int n = 0; n < rates.Count; n++)
+            while (n < rates.Count)
             {
                 int coin = rates[n];
 
-                if (coin > sum || coins[coin] == 0) continue;
-                if (sum > coins[coin] * coin)
+                if (current_coins.ContainsKey(coin) && current_coins[coin] == _coins[coin])
                 {
-                    int nv = sum - coin * coins[coin];
-                    val = new List<Coins>();
-                    val.Add(new Coins(coin, coins[coin]));
-
-                    if (Fit(n, nv, rates, ref val, coins)) return val;
+                    n++;
                     continue;
                 }
 
-                val = new List<Coins>();
-                val.Add(new Coins(coin, sum / coin));
+                if (coin > sum || coins[coin] == 0)
+                {
+                    n++;
+                    if (n == rates.Count)
+                    {
+                        if (coins_set.Count == 0) break;
+                        n--;
+                        int iprev = coins_set.Count - 1;
+                        int prev = coins_set[iprev];
+                        current_sum -= prev;
+                        coins_set.RemoveAt(iprev);
+                        current_coins[prev]--;
 
-                if (sum % coin == 0) return val;
+                        while (rates[n] != prev)
+                        {
+                            n--;
+                            if (n < 0) return null;
+                        }
+                        n++;
+                        continue;
+                    }
+                    continue;
+                }
 
-                int v = sum - coin * (sum / coin);
-                if (Fit(n, v, rates, ref val, coins)) return val;
+                current_sum += coin;
+                coins_set.Add(coin);
+                if (!current_coins.ContainsKey(coin)) current_coins[coin] = 1;
+                else current_coins[coin]++;
+
+                if (current_sum == sum)
+                {
+                    foreach (KeyValuePair<int, int> entry in current_coins)
+                        res.Add(new Coins(entry.Key, entry.Value));
+
+                    return res;
+                }
+
+                if (current_sum > sum)
+                {
+                    current_sum -= coin;
+                    coins_set.RemoveAt(coins_set.Count - 1);
+                    current_coins[coin]--;
+                    
+                    if (n == rates.Count - 1)
+                    {
+                        int prev = rates[n - 1];
+                        current_sum -= prev;
+                        int iprev = coins_set.Count - 1;
+
+                        while (coins_set[iprev] != prev)
+                        {
+                            current_coins[coins_set[iprev]]--;
+                            coins_set.RemoveAt(iprev);
+                            iprev--;
+                            if (iprev < 0) return null;
+                        }
+
+                        current_coins[prev]--;
+                        coins_set.RemoveAt(iprev);
+                        continue;
+                    }
+                    else n++;
+                }
             }
 
             return null;
@@ -201,7 +193,6 @@ namespace test
                 return;
             }
             
-            int amount = sum;
             Dictionary<int, int> change = new Dictionary<int, int>();
 
             List<Coins> composition = GetComposition(sum, _coins);
@@ -213,15 +204,8 @@ namespace test
 
             foreach (Coins coin in composition)
             {
-                amount -= coin.CoinType * coin.Count;
-                if (!change.ContainsKey(coin.CoinType)) change[coin.CoinType] = coin.Count;
-                else change[coin.CoinType] += coin.Count;
-            }
-
-            foreach (KeyValuePair<int, int> entry in change)
-            {
-                _coins[entry.Key] -= entry.Value;
-                toDest.AddCoins(new Coins(entry.Key, entry.Value));
+                _coins[coin.CoinType] -= coin.Count;
+                toDest.AddCoins(new Coins(coin.CoinType, coin.Count));
             }
             Account -= sum;
             sum = 0;

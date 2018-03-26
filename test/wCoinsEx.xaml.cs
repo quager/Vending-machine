@@ -11,6 +11,7 @@ namespace test
         {
             InitializeComponent();
             c = coins;
+            Title = c.CoinType.ToString();
         }
 
         private void Down_Click(object sender, RoutedEventArgs e)
